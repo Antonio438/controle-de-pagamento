@@ -1,4 +1,4 @@
-// CÓDIGO 100% COMPLETO E CORRIGIDO PARA O RENDER
+// CÓDIGO CORRIGIDO COM A ORDEM CORRETA
 const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
@@ -6,21 +6,16 @@ const path = require('path');
 
 const app = express();
 
-// --- ALTERAÇÃO 1: Usar a porta do Render e o HOST correto ---
 const PORT = process.env.PORT || 8000;
-const HOST = '0.0.0.0'; // ESSENCIAL para funcionar online
-
-// --- ALTERAÇÃO 2: Apontar para o diretório raiz, onde seus arquivos estão ---
+const HOST = '0.0.0.0';
 const PUBLIC_DIR = __dirname;
-// -----------------------------------------------------------------------
-
 const DB_FILE = path.join(__dirname, 'database.json');
 
-// Middlewares
+// --- 1. Middlewares (Executados primeiro) ---
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Rotas da API
+// --- 2. Rotas da API (Devem vir ANTES do servidor de arquivos estáticos) ---
 app.get('/api/data', (req, res) => {
     const data = readDB();
     res.status(200).json(data);
@@ -36,20 +31,22 @@ app.post('/api/data', (req, res) => {
     }
 });
 
-// Servidor de Arquivos Estáticos
+// --- 3. Servidor de Arquivos Estáticos ---
 app.use(express.static(PUBLIC_DIR));
 
-// Rota de Fallback para o index.html
+// --- 4. Rota de Fallback para SPA (DEVE SER A ÚLTIMA ROTA "GET") ---
+// Se nenhuma rota de API ou arquivo estático for encontrado, ele serve o index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
-// Iniciar o Servidor
+// --- Iniciar o Servidor ---
 app.listen(PORT, HOST, () => {
     console.log(`Servidor rodando em http://${HOST}:${PORT}`);
 });
 
-// Funções Auxiliares (sem alterações)
+
+// --- Funções Auxiliares (sem alterações) ---
 const readDB = () => {
     try {
         if (fs.existsSync(DB_FILE)) {
@@ -62,6 +59,7 @@ const readDB = () => {
     }
     return { processes: [], payments: [], users: [], activities: [] };
 };
+
 const writeDB = (data) => {
     try {
         fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
@@ -69,4 +67,3 @@ const writeDB = (data) => {
         console.error('Erro ao escrever no arquivo de banco de dados:', error);
     }
 };
-
