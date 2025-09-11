@@ -62,7 +62,6 @@ const readDB = () => {
     }
     return { processes: [], payments: [], users: [], activities: [] };
 };
-
 const writeDB = (data) => {
     try {
         fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
@@ -70,3 +69,4 @@ const writeDB = (data) => {
         console.error('Erro ao escrever no arquivo de banco de dados:', error);
     }
 };
+
