@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Processos | Contabilidade</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100">
+    <div id="toast" class="toast"></div>
+
+    <div id="app-container" class="flex h-screen overflow-hidden">
+        <div id="sidebar" class="sidebar bg-white w-64 border-r border-gray-200 flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-file-invoice-dollar mr-2 text-blue-600"></i>
+                    Controle Processos
+                </h1>
+                <p class="text-xs text-gray-500">Setor de Contabilidade</p>
+            </div>
+            <nav class="flex-1 p-4">
+                <ul class="space-y-2">
+                    <li><a href="#" id="dashboard-link" class="nav-link flex items-center p-2 rounded-lg"><i class="fas fa-tachometer-alt mr-3"></i> Dashboard</a></li>
+                    <li><a href="#" id="processes-link" class="nav-link flex items-center p-2 rounded-lg"><i class="fas fa-file-alt mr-3"></i> Processos</a></li>
+                    <li><a href="#" id="payments-link" class="nav-link flex items-center p-2 rounded-lg"><i class="fas fa-money-bill-wave mr-3"></i> Pagamentos</a></li>
+                    <li><a href="#" id="reports-link" class="nav-link flex items-center p-2 rounded-lg"><i class="fas fa-history mr-3"></i> Relatórios</a></li>
+                    <li><a href="#" id="settings-link" class="nav-link flex items-center p-2 rounded-lg"><i class="fas fa-cog mr-3"></i> Configurações</a></li>
+                </ul>
+            </nav>
+            <div class="mt-auto p-4 border-t border-gray-200" id="user-profile-sidebar">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center"><i id="user-icon" class="fas fa-user text-gray-500"></i></div>
+                    <div class="ml-3">
+                        <p id="user-name-sidebar" class="text-sm font-medium">Visitante</p>
+                        <a href="#" id="login-logout-btn" class="text-xs text-blue-500 hover:underline">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-content" class="main-content flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-gray-200 py-3 px-6 flex items-center justify-between">
+                <div class="flex items-center" style="flex: 1;">
+                    <button id="menu-toggle" class="mr-4 text-gray-500 focus:outline-none" aria-label="Abrir/Fechar menu"><i class="fas fa-bars"></i></button>
+                    <h2 class="text-lg font-semibold" id="page-title">Dashboard</h2>
+                </div>
+                <div class="text-center" style="flex: 2;">
+                    <h1 class="text-xl font-bold text-gray-700 whitespace-nowrap">CONTABILIDADE – CMEG 2025</h1>
+                </div>
+                <div style="flex: 1;"></div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-3 md:p-6">
+                <div id="dashboard-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+                        <div id="card-pending" class="card-metric" onclick="setPaymentFilterAndShow('Pendente')">
+                            <h3 class="text-lg font-semibold text-gray-600">Pagamentos Pendentes</h3>
+                            <p id="pending-payments" class="text-3xl font-bold text-red-500">0</p>
+                        </div>
+                        <div id="card-registered" class="card-metric" onclick="setPaymentFilterAndShow('Cadastrado no banco')">
+                            <h3 class="text-lg font-semibold text-gray-600">Cadastrados no Banco</h3>
+                            <p id="cadastrado-banco" class="text-3xl font-bold">0</p>
+                        </div>
+                        <div id="card-scheduled" class="card-metric" onclick="setPaymentFilterAndShow('Agendados para Hoje')">
+                            <h3 class="text-lg font-semibold text-gray-600">Agendados do dia</h3>
+                            <p id="today-scheduled" class="text-3xl font-bold text-blue-500">0</p>
+                        </div>
+                        <div id="card-paid" class="card-metric" onclick="setPaymentFilterAndShow('Pagos Hoje')">
+                            <h3 class="text-lg font-semibold text-gray-600">Pagos do dia</h3>
+                            <p id="today-paid" class="text-3xl font-bold text-green-500">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold mb-4">Pagamentos Recentes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead><tr><th class="table-header">Nº Processo</th><th class="table-header">Fornecedor</th><th class="table-header">Valor</th><th class="table-header">Data Pag.</th><th class="table-header">Método</th><th class="table-header">Status</th></tr></thead>
+                                <tbody id="recent-payments"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="processes-content" class="hidden">
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                             <div class="flex items-center space-x-2 w-full md:w-auto">
+                                <input type="text" id="search-input" placeholder="Buscar por nº ou fornecedor..." class="input-styled w-full">
+                                <button id="clear-process-filters-btn" class="btn-clear-filter" title="Limpar Filtro"><i class="fas fa-times"></i></button>
+                            </div>
+                            <button id="btn-novo-processo" class="btn-primary w-full md:w-auto">Novo Processo</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead><tr><th class="table-header">Nº Processo</th><th class="table-header">Fornecedor</th><th class="table-header">Modalidade</th><th class="table-header">Localização</th><th class="table-header text-right">Ações</th></tr></thead>
+                                <tbody id="processes-table-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer">Mostrando <span id="processes-showing-to">0</span> de <span id="processes-total-items">0</span></div>
+                    </div>
+                </div>
+
+                <div id="payments-content" class="hidden">
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex flex-wrap items-end justify-between mb-4 gap-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="text" id="payments-search" placeholder="Buscar..." class="input-styled flex-grow sm:flex-grow-0">
+                                <select id="payment-status-filter" class="input-styled"></select>
+                                <select id="payment-month-filter" class="input-styled"></select>
+                                <select id="payment-year-filter" class="input-styled"></select>
+                                <input type="text" id="payments-date-range" placeholder="Ou selecione um intervalo..." class="input-styled">
+                                <button id="clear-payments-filters-btn" class="btn-clear-filter" title="Limpar Filtros"><i class="fas fa-times"></i></button>
+                            </div>
+                            <button id="btn-novo-pagamento" class="btn-primary w-full sm:w-auto mt-2 sm:mt-0">Novo Pagamento</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th class="table-header">Nº Processo</th>
+                                        <th class="table-header">Fornecedor</th>
+                                        <th class="table-header">Valor</th>
+                                        <th class="table-header">Vencimento</th>
+                                        <th class="table-header">Método</th>
+                                        <th class="table-header">Status</th>
+                                        <th class="table-header">Localização</th>
+                                        <th class="table-header text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payments-table-body"></tbody>
+                            </table>
+                        </div>
+                         <div class="table-footer">Mostrando <span id="payments-showing-to">0</span> de <span id="payments-total-items">0</span></div>
+                    </div>
+                </div>
+
+                <div id="reports-content" class="hidden">
+                     <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold mb-4">Relatório de Atividades</h3>
+                        <div class="flex flex-wrap items-end gap-4 mb-4">
+                             <div class="flex-grow min-w-[150px]">
+                                <label for="activity-type-filter" class="block text-sm font-medium text-gray-700">Filtrar por Tipo</label>
+                                <select id="activity-type-filter" class="input-styled w-full mt-1"></select>
+                            </div>
+                            <div class="flex-grow min-w-[150px]">
+                                <label for="report-period-filter" class="block text-sm font-medium text-gray-700">Período</label>
+                                <select id="report-period-filter" class="input-styled w-full mt-1">
+                                    <option value="day">Dia</option>
+                                    <option value="range">Intervalo de Datas</option>
+                                    <option value="weekly">Semanal</option>
+                                    <option value="monthly">Mensal</option>
+                                    <option value="annual">Anual</option>
+                                    <option value="all">Todo o Período</option>
+                                </select>
+                            </div>
+                            <div id="report-date-pickers" class="flex-grow flex items-end gap-2">
+                                </div>
+                            <div class="flex items-end gap-2">
+                                <button id="clear-reports-filters-btn" class="btn-clear-filter" title="Limpar Filtros"><i class="fas fa-times"></i></button>
+                                <button id="generate-report-btn" class="btn-primary">Gerar PDF</button>
+                                <button id="clear-activities-btn" class="btn-danger">Limpar Log</button>
+                            </div>
+                        </div>
+                        <div id="activities-log-container" class="mt-6 h-96 overflow-y-auto border border-gray-200 rounded-md"></div>
+                    </div>
+                </div>
+
+                <div id="settings-content" class="hidden">
+                    <div class="space-y-8">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Aparência</h3>
+                            <div class="flex items-center justify-between">
+                                <label for="theme-toggle" class="text-gray-600 font-medium">Tema Escuro</label>
+                                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" name="theme-toggle" id="theme-toggle" class="theme-toggle-checkbox"/>
+                                    <label for="theme-toggle" class="theme-toggle-label"></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="user-management-section" class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-semibold mb-6 text-gray-800">Gerenciamento de Conta</h3>
+                            
+                            <div class="border-b border-gray-200 pb-6 mb-6">
+                                <h4 class="text-lg font-semibold text-gray-700 mb-4">Alterar Senha</h4>
+                                <form id="change-password-form" class="space-y-4 max-w-md">
+                                    <div>
+                                        <label for="current-password" class="block text-sm font-medium text-gray-700">Senha Atual</label>
+                                        <input type="password" id="current-password" class="input-styled w-full mt-1" required>
+                                    </div>
+                                    <div>
+                                        <label for="new-password" class="block text-sm font-medium text-gray-700">Nova Senha</label>
+                                        <input type="password" id="new-password" class="input-styled w-full mt-1" required>
+                                    </div>
+                                    <div>
+                                        <label for="confirm-new-password" class="block text-sm font-medium text-gray-700">Confirmar Nova Senha</label>
+                                        <input type="password" id="confirm-new-password" class="input-styled w-full mt-1" required>
+                                    </div>
+                                    <button type="submit" class="btn-primary">Salvar Nova Senha</button>
+                                </form>
+                            </div>
+
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-700 mb-4">Usuários do Sistema</h4>
+                                <form id="add-user-form" class="space-y-4 max-w-md mb-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="new-username" class="block text-sm font-medium text-gray-700">Novo Usuário</label>
+                                            <input type="text" id="new-username" class="input-styled w-full mt-1" required>
+                                        </div>
+                                        <div>
+                                            <label for="new-user-password" class="block text-sm font-medium text-gray-700">Senha</label>
+                                            <input type="password" id="new-user-password" class="input-styled w-full mt-1" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn-secondary">Adicionar Usuário</button>
+                                </form>
+                                <div id="users-list-container">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="process-modal" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="process-modal-title" class="text-lg font-medium"></h3><button onclick="closeProcessModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div class="modal-body"><form id="process-form" class="space-y-4" onsubmit="return false;"><input type="hidden" id="process-id"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="process-number">Nº do Processo</label><input type="text" id="process-number" class="input-styled w-full"></div><div><label for="supplier">Fornecedor</label><input type="text" id="supplier" class="input-styled w-full"></div></div><div><label for="payment-type">Modalidade de Pagamento</label><select id="payment-type" class="input-styled w-full"><option value="">Selecione</option><option>Dispensa</option><option>Pregão Eletrônico</option><option>Inexigibilidade</option><option>Adiantamento</option><option>Outros</option></select></div><div id="modalidade-other-section" class="hidden"><label for="modalidade-other-text">Especifique a Modalidade</label><input type="text" id="modalidade-other-text" class="input-styled w-full"></div><div><label for="description">Descrição</label><textarea id="description" rows="3" class="input-styled w-full"></textarea></div><div><label for="process-docs">Documentos</label><div class="file-upload"><input type="file" id="process-docs" class="hidden" multiple><label for="process-docs" class="cursor-pointer">Arraste ou clique para enviar</label></div><div id="process-file-preview-container" class="mt-2 flex flex-col gap-2"></div></div></form></div><div class="modal-footer"><button type="button" onclick="closeProcessModal()" class="btn-secondary">Cancelar</button><button type="button" onclick="saveProcess()" class="btn-primary">Salvar</button></div></div></div>
+    <div id="payment-modal" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="payment-modal-title" class="text-lg font-medium"></h3><button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div class="modal-body"><form id="payment-form" class="space-y-4" onsubmit="return false;"><input type="hidden" id="payment-id"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="payment-process-number">Nº do Processo</label><input type="text" id="payment-process-number" class="input-styled w-full" list="process-numbers-list"><datalist id="process-numbers-list"></datalist></div><div><label for="payment-supplier">Fornecedor</label><input type="text" id="payment-supplier" class="input-styled w-full" list="supplier-list"><datalist id="supplier-list"></datalist></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="payment-value">Valor (R$)</label><input type="number" id="payment-value" class="input-styled w-full"></div><div><label for="payment-date">Data Vencimento</label><input type="date" id="payment-date" class="input-styled w-full"></div></div><div><label for="payment-method">Método de Pagamento</label><select id="payment-method" class="input-styled w-full"><option value="">Selecione</option><option>TED</option><option>TEV</option><option>PIX</option><option>BOLETO</option><option>Outros</option></select></div><div id="payment-method-other-section" class="hidden"><label for="payment-method-other-text">Especifique o Método</label><input type="text" id="payment-method-other-text" class="input-styled w-full"></div><div><label for="payment-status">Status</label><select id="payment-status" class="input-styled w-full"><option value="">Selecione</option><option>Pendente de Liquidação/O.P</option><option>Pendente de Cadastro no Banco</option><option>Cadastrado no banco</option><option>Agendado</option><option>Pago</option></select></div><div><label for="payment-proof">Comprovante</label><div class="file-upload"><input type="file" id="payment-proof" class="hidden" accept="image/*,application/pdf"><label for="payment-proof" class="cursor-pointer">Arraste ou clique para enviar</label></div><div id="payment-file-preview-container" class="mt-2 flex flex-col gap-2"></div></div><div><label for="payment-description">Observações</label><textarea id="payment-description" rows="2" class="input-styled w-full"></textarea></div></form></div><div class="modal-footer"><button type="button" onclick="closePaymentModal()" class="btn-secondary">Cancelar</button><button type="button" onclick="savePayment()" class="btn-primary">Salvar</button></div></div></div>
+    <div id="proof-modal" class="modal"><div class="modal-content w-full max-w-3xl"><div class="modal-header"><h3 id="proof-modal-title" class="text-lg font-medium"></h3><button onclick="closeProofModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div id="proof-content" class="modal-body"></div><div class="modal-footer"><button id="download-proof-btn" class="btn-secondary">Download</button><button id="print-proof-btn" class="btn-primary">Imprimir</button></div></div></div>
+    <div id="details-modal" class="modal"></div>
+    <div id="other-location-modal" class="modal"><div class="modal-content max-w-md"><div class="modal-header"><h3 class="text-lg font-medium">Editar Localização "Outros"</h3><button onclick="closeOtherLocationModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div class="modal-body"><input type="hidden" id="other-location-process-id"><label for="other-location-text" class="block mb-2 font-medium text-gray-700">Especifique a localização ou com quem está o processo:</label><input type="text" id="other-location-text" class="input-styled w-full"></div><div class="modal-footer"><button onclick="closeOtherLocationModal()" class="btn-secondary">Cancelar</button><button onclick="saveOtherLocation()" class="btn-primary">Salvar</button></div></div></div>
+    <div id="login-modal" class="modal"><div class="login-modal-content"><div class="login-modal-body"><div id="login-view"><h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Acesso Restrito</h2><p class="text-center text-gray-500 mb-8">Faça login para continuar</p><form id="login-form" class="space-y-4"><div class="input-group"><label for="login-username">Nome de usuário</label><input type="text" id="login-username" required class="input-styled w-full" placeholder="seu-usuario"></div><div class="input-group"><label for="login-password">Senha</label><input type="password" id="login-password" required class="input-styled w-full" placeholder="********"></div><button type="submit" class="w-full btn-primary">Entrar</button></form><p class="mt-6 text-center text-sm">Primeiro acesso? <a href="#" id="show-register-view" class="font-medium text-blue-600 hover:text-blue-500">Cadastre-se</a></p></div><div id="register-view" class="hidden"><h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Crie sua Conta</h2><p class="text-center text-gray-500 mb-8">É rápido e fácil</p><form id="register-form" class="space-y-4"><div class="input-group"><label for="register-username">Nome de usuário</label><input type="text" id="register-username" required class="input-styled w-full" placeholder="crie-um-usuario"></div><div class="input-group"><label for="register-password">Crie uma senha</label><input type="password" id="register-password" required class="input-styled w-full" placeholder="********"></div><div class="input-group"><label for="admin-password">Senha do Administrador</label><input type="password" id="admin-password" required class="input-styled w-full" placeholder="********"><p class="text-xs text-gray-400 mt-1">Necessária para criar um novo usuário.</p></div><button type="submit" class="w-full btn-primary">Cadastrar</button></form><p class="mt-6 text-center text-sm">Já tem uma conta? <a href="#" id="show-login-view" class="font-medium text-blue-600 hover:text-blue-500">Faça Login</a></p></div><button onclick="closeLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div></div></div>
+    <div id="clear-log-modal" class="modal"><div class="modal-content max-w-lg"><div class="modal-header"><h3 class="text-lg font-medium">Confirmar Limpeza de Registros</h3><button onclick="closeClearLogModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div class="modal-body"><p class="mb-4">Você tem certeza que deseja limpar os registros de atividades? Esta ação não pode ser desfeita.</p><div class="space-y-4"><div><label class="block text-sm font-medium text-gray-700">Selecione o que deseja limpar:</label><select id="clear-type-select" class="input-styled w-full mt-1"><option value="filtered">Apenas os registros filtrados na tela</option><option value="all">Todos os registros</option></select></div><div><label for="clear-admin-password" class="block text-sm font-medium text-gray-700">Senha do Administrador:</label><input type="password" id="clear-admin-password" class="input-styled w-full mt-1" placeholder="Digite a senha para confirmar"></div></div></div><div class="modal-footer"><button onclick="closeClearLogModal()" class="btn-secondary">Cancelar</button><button onclick="executeClearLog()" class="btn-danger">Confirmar Limpeza</button></div></div></div>
+    <div id="confirmation-modal" class="modal"><div class="modal-content max-w-md"><div class="modal-header"><h3 class="text-lg font-medium">Confirmar Exclusão</h3><button onclick="closeConfirmationModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button></div><div class="modal-body"><p id="confirmation-text">Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</p></div><div class="modal-footer"><button id="cancel-delete-btn" class="btn-secondary">Cancelar</button><button id="confirm-delete-btn" class="btn-danger">Excluir</button></div></div></div>
+
+    <div id="important-alert-modal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="modal-header">
+                <h3 id="important-modal-title" class="text-lg font-medium text-gray-800">Opções de Processo</h3>
+                <button onclick="closeImportantAlertModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button>
+            </div>
+            <div class="modal-body space-y-5">
+                <input type="hidden" id="important-process-id">
+                
+                <div class="flex items-center justify-between">
+                    <label for="is-important-checkbox" class="flex items-center cursor-pointer">
+                        <i class="fas fa-star w-6 text-center text-yellow-500"></i>
+                        <span class="ml-3 text-gray-700 font-medium">Marcar como importante</span>
+                    </label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="is-important-checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label for="add-alert-checkbox" class="flex items-center cursor-pointer">
+                        <i class="fas fa-bell w-6 text-center text-blue-500"></i>
+                        <span class="ml-3 text-gray-700 font-medium">Adicionar alerta com data</span>
+                    </label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="add-alert-checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div id="alert-details-section" class="alert-details">
+                    <div class="space-y-3 pt-4 border-t border-gray-200">
+                        <div>
+                            <label for="alert-date" class="block text-sm font-medium text-gray-600">Data do Alerta</label>
+                            <input type="date" id="alert-date" class="input-styled w-full mt-1">
+                        </div>
+                        <div>
+                            <label for="alert-message" class="block text-sm font-medium text-gray-600">Mensagem do Alerta</label>
+                            <textarea id="alert-message" rows="3" class="input-styled w-full mt-1" placeholder="Escreva uma mensagem curta para o alerta..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeImportantAlertModal()" class="btn-secondary">Cancelar</button>
+                <button onclick="saveImportanceAndAlert()" class="btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="todays-alerts-modal" class="modal">
+        <div class="modal-content max-w-xl">
+            <div class="modal-header">
+                <h3 class="text-lg font-medium text-yellow-500 flex items-center"><i class="fas fa-bell mr-2"></i> Lembretes para Hoje</h3>
+                <button onclick="closeTodaysAlertsModal()" class="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">&times;</button>
+            </div>
+            <div id="todays-alerts-content" class="modal-body"></div>
+            <div class="modal-footer">
+                <button onclick="closeTodaysAlertsModal()" class="btn-primary">Entendido</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
