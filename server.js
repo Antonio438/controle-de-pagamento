@@ -1,4 +1,4 @@
-// CÓDIGO 100% COMPLETO E CORRIGIDO
+// CÓDIGO 100% COMPLETO E CORRIGIDO PARA O RENDER
 const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
@@ -6,21 +6,21 @@ const path = require('path');
 
 const app = express();
 
-// --- ALTERAÇÃO 1: Definir a porta a partir do ambiente e o HOST correto ---
-const PORT = process.env.PORT || 8000; // Render define a porta via variável de ambiente
-const HOST = '0.0.0.0'; // ESSENCIAL: Escutar em todas as interfaces de rede
-// ---------------------------------------------------------------------
+// --- ALTERAÇÃO 1: Usar a porta do Render e o HOST correto ---
+const PORT = process.env.PORT || 8000;
+const HOST = '0.0.0.0'; // ESSENCIAL para funcionar online
 
-// --- ALTERAÇÃO 2: Apontar para o diretório raiz para os arquivos estáticos ---
-const PUBLIC_DIR = __dirname; // Seus arquivos estão na raiz do projeto
+// --- ALTERAÇÃO 2: Apontar para o diretório raiz, onde seus arquivos estão ---
+const PUBLIC_DIR = __dirname;
 // -----------------------------------------------------------------------
+
 const DB_FILE = path.join(__dirname, 'database.json');
 
-// --- Middlewares ---
+// Middlewares
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// --- Rotas da API ---
+// Rotas da API
 app.get('/api/data', (req, res) => {
     const data = readDB();
     res.status(200).json(data);
@@ -28,7 +28,6 @@ app.get('/api/data', (req, res) => {
 
 app.post('/api/data', (req, res) => {
     const newData = req.body;
-    // Adicionada uma verificação mais robusta
     if (newData && typeof newData === 'object') {
         writeDB(newData);
         res.status(200).json({ message: 'Dados salvos com sucesso.' });
@@ -37,28 +36,25 @@ app.post('/api/data', (req, res) => {
     }
 });
 
-// --- Servidor de Arquivos Estáticos ---
+// Servidor de Arquivos Estáticos
 app.use(express.static(PUBLIC_DIR));
 
-// --- Rota de Fallback para SPA ---
-// Garante que o index.html seja servido para qualquer rota não-API
+// Rota de Fallback para o index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
-// --- Iniciar o Servidor ---
+// Iniciar o Servidor
 app.listen(PORT, HOST, () => {
     console.log(`Servidor rodando em http://${HOST}:${PORT}`);
 });
 
-// --- Funções Auxiliares ---
+// Funções Auxiliares (sem alterações)
 const readDB = () => {
     try {
         if (fs.existsSync(DB_FILE)) {
             const data = fs.readFileSync(DB_FILE, 'utf-8');
-            if (data.trim() === '') {
-                return { processes: [], payments: [], users: [], activities: [] };
-            }
+            if (data.trim() === '') return { processes: [], payments: [], users: [], activities: [] };
             return JSON.parse(data);
         }
     } catch (error) {
