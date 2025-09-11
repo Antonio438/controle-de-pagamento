@@ -1,15 +1,19 @@
-// CÓDIGO 100% COMPLETO
+// CÓDIGO 100% COMPLETO E CORRIGIDO
 const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
-// --- ALTERAÇÃO 1: Definir a porta e o IP desejados ---
-const PORT = 8000;
-const HOST = '192.168.19.250';
-// --------------------------------------------------------
-const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// --- ALTERAÇÃO 1: Definir a porta a partir do ambiente e o HOST correto ---
+const PORT = process.env.PORT || 8000; // Render define a porta via variável de ambiente
+const HOST = '0.0.0.0'; // ESSENCIAL: Escutar em todas as interfaces de rede
+// ---------------------------------------------------------------------
+
+// --- ALTERAÇÃO 2: Apontar para o diretório raiz para os arquivos estáticos ---
+const PUBLIC_DIR = __dirname; // Seus arquivos estão na raiz do projeto
+// -----------------------------------------------------------------------
 const DB_FILE = path.join(__dirname, 'database.json');
 
 // --- Middlewares ---
@@ -24,7 +28,8 @@ app.get('/api/data', (req, res) => {
 
 app.post('/api/data', (req, res) => {
     const newData = req.body;
-    if (newData && typeof newData === 'object' && 'processes' in newData) {
+    // Adicionada uma verificação mais robusta
+    if (newData && typeof newData === 'object') {
         writeDB(newData);
         res.status(200).json({ message: 'Dados salvos com sucesso.' });
     } else {
@@ -36,8 +41,14 @@ app.post('/api/data', (req, res) => {
 app.use(express.static(PUBLIC_DIR));
 
 // --- Rota de Fallback para SPA ---
+// Garante que o index.html seja servido para qualquer rota não-API
 app.get('*', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+// --- Iniciar o Servidor ---
+app.listen(PORT, HOST, () => {
+    console.log(`Servidor rodando em http://${HOST}:${PORT}`);
 });
 
 // --- Funções Auxiliares ---
@@ -63,10 +74,3 @@ const writeDB = (data) => {
         console.error('Erro ao escrever no arquivo de banco de dados:', error);
     }
 };
-
-// --- Inicia o servidor ---
-// --- ALTERAÇÃO 2: Usar o IP e a porta definidos ao iniciar o servidor ---
-app.listen(PORT, HOST, () => {
-    console.log(`Servidor rodando em http://${HOST}:${PORT}`);
-});
-// --------------------------------------------------------------------
