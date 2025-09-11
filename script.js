@@ -1,6 +1,6 @@
 // --- CONFIGURAÇÃO GLOBAL ---
-const API_URL = '/api/data';
-
+// LINHA NOVA E CORRIGIDA
+const API_URL = 'https://controle-de-pagamento.onrender.com/api/data';
 // --- ESTADO DA APLICAÇÃO ---
 let processes = [];
 let payments = [];
@@ -1358,4 +1358,5 @@ function handleDeleteUser(username) {
         return;
     }
     confirmDelete(null, 'user', username);
+
 }
