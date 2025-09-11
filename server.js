@@ -47,23 +47,26 @@ app.listen(PORT, HOST, () => {
 
 
 // --- Funções Auxiliares (sem alterações) ---
+// VERSÃO NOVA E CORRIGIDA - Não quebra o servidor
 const readDB = () => {
-    try {
-        if (fs.existsSync(DB_FILE)) {
-            const data = fs.readFileSync(DB_FILE, 'utf-8');
-            if (data.trim() === '') return { processes: [], payments: [], users: [], activities: [] };
-            return JSON.parse(data);
-        }
-    } catch (error) {
-        console.error('Erro ao ler o arquivo de banco de dados:', error);
+    // Primeiro, verifica se o arquivo existe. Se não, retorna um DB vazio.
+    if (!fs.existsSync(DB_FILE)) {
+        return { processes: [], payments: [], users: [], activities: [] };
     }
-    return { processes: [], payments: [], users: [], activities: [] };
-};
 
-const writeDB = (data) => {
+    const data = fs.readFileSync(DB_FILE, 'utf-8');
+
+    // Se o arquivo estiver vazio, retorna um DB vazio.
+    if (data.trim() === '') {
+        return { processes: [], payments: [], users: [], activities: [] };
+    }
+
+    // TENTA fazer o parse. Se falhar, captura o erro e retorna um DB vazio em vez de quebrar.
     try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        return JSON.parse(data);
     } catch (error) {
-        console.error('Erro ao escrever no arquivo de banco de dados:', error);
+        console.error('Erro ao fazer parse do JSON do banco de dados:', error);
+        // Retorna um estado seguro em caso de arquivo corrompido
+        return { processes: [], payments: [], users: [], activities: [] };
     }
 };
