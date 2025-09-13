@@ -71,3 +71,4 @@ const writeDB = (data) => {
         console.error('Erro ao escrever no arquivo:', error);
     }
 };
+
