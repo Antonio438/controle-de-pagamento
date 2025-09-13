@@ -1,6 +1,7 @@
 // --- CONFIGURAÇÃO GLOBAL ---
-// LINHA NOVA E CORRIGIDA
-const API_URL = 'https://controle-de-pagamento.onrender.com/api/data';
+// AQUI ESTÁ A CORREÇÃO: Usamos um caminho relativo para a API.
+const API_URL = '/api/data';
+
 // --- ESTADO DA APLICAÇÃO ---
 let processes = [];
 let payments = [];
