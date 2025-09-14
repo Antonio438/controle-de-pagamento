@@ -1,7 +1,6 @@
 // =================================================================
 //      CÓDIGO FINAL COM BANCO DE DADOS VERCEL POSTGRES
 // =================================================================
-// TESTE FINAL PARA GARANTIR QUE O ARQUIVO FOI SALVO
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg'); // Importa o "tradutor" do Postgres
