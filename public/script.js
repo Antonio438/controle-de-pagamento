@@ -1,5 +1,4 @@
 // --- CONFIGURAÇÃO GLOBAL ---
-// AQUI ESTÁ A CORREÇÃO: Usamos um caminho relativo para a API.
 const API_URL = '/api/data';
 
 // --- ESTADO DA APLICAÇÃO ---
