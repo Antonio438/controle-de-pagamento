@@ -1360,4 +1360,3 @@ function handleDeleteUser(username) {
     confirmDelete(null, 'user', username);
 
 }
-agora sim, tudo ok. obrigado
