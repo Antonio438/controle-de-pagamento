@@ -1361,5 +1361,4 @@ function handleDeleteUser(username) {
     confirmDelete(null, 'user', username);
 
 }
->>>>>>> 63517306de92c5a9518d4644e6ea6ff6b08eca6c:script.js
 agora sim, tudo ok. obrigado
