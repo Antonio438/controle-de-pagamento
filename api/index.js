@@ -1,15 +1,14 @@
 // =================================================================
 //      CÓDIGO FINAL COM BANCO DE DADOS VERCEL POSTGRES
+//              AJUSTADO PARA VERCEL
 // =================================================================
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg'); // Importa o "tradutor" do Postgres
+const { Pool } = require('pg');
 
 const app = express();
 
 // --- 1. CONFIGURAÇÃO DO BANCO DE DADOS ---
-// O Pool gerencia as conexões com o banco de dados.
-// Ele usa a variável de ambiente POSTGRES_URL que a Vercel criou.
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   ssl: {
@@ -26,7 +25,6 @@ app.use(express.json({ limit: '50mb' }));
 // Rota para LER todos os dados do banco de dados
 app.get('/api/data', async (req, res) => {
   try {
-    // Fazemos 4 buscas no banco de dados em paralelo
     const [processesResult, paymentsResult, usersResult, activitiesResult] = await Promise.all([
       pool.query('SELECT * FROM processes'),
       pool.query('SELECT * FROM payments'),
@@ -34,30 +32,30 @@ app.get('/api/data', async (req, res) => {
       pool.query('SELECT * FROM activities')
     ]);
 
-    // Extraímos os dados e formatamos como o front-end espera
     const data = {
       processes: processesResult.rows.map(row => ({ id: row.id, ...row.data })),
       payments: paymentsResult.rows.map(row => ({ id: row.id, ...row.data })),
       users: usersResult.rows,
       activities: activitiesResult.rows.map(row => ({ id: row.id, ...row.data }))
     };
-    
+
     res.status(200).json(data);
+
   } catch (error) {
-    console.error('Erro ao ler dados do banco:', error);
-    res.status(500).json({ message: 'Erro interno ao buscar dados.' });
+    console.error('Erro ao buscar dados do banco:', error);
+    res.status(500).json({ message: 'Erro interno do servidor ao buscar dados.' });
   }
 });
 
-// Rota para SALVAR todos os dados no banco de dados
+// Rota para SALVAR (sobrescrever) todos os dados no banco de dados
 app.post('/api/data', async (req, res) => {
   const { processes, payments, users, activities } = req.body;
-  const client = await pool.connect(); // Pega uma conexão para fazer várias operações
+  const client = await pool.connect();
 
   try {
-    await client.query('BEGIN'); // Inicia uma "transação" segura
+    await client.query('BEGIN');
 
-    // Limpa as tabelas antes de inserir os novos dados
+    // Limpa todas as tabelas
     await client.query('DELETE FROM processes');
     await client.query('DELETE FROM payments');
     await client.query('DELETE FROM users');
@@ -88,17 +86,18 @@ app.post('/api/data', async (req, res) => {
         }
     }
 
-    await client.query('COMMIT'); // Confirma todas as operações
+    await client.query('COMMIT');
     res.status(200).json({ message: 'Dados salvos com sucesso no banco de dados.' });
 
   } catch (error) {
-    await client.query('ROLLBACK'); // Desfaz tudo se der algum erro
+    await client.query('ROLLBACK');
     console.error('Erro ao salvar dados no banco:', error);
-    res.status(500).json({ message: 'Erro interno ao salvar dados.' });
+    res.status(500).json({ message: 'Erro interno do servidor ao salvar dados.' });
   } finally {
-    client.release(); // Libera a conexão
+    client.release();
   }
 });
 
-// --- 4. EXPORTAÇÃO PARA A VERCEL ---
+// --- 4. EXPORTAR O APP PARA A VERCEL ---
+// A Vercel vai usar este 'app' para criar a função serverless.
 module.exports = app;
