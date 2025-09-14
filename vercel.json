@@ -1,6 +1,7 @@
 {
   "version": 2,
   "installCommand": "npm install --prefix api && npm install",
+  "framework": null,  <-- NOVA LINHA CRUCIAL AQUI (ou use "")
   "builds": [
     {
       "src": "api/index.js",
